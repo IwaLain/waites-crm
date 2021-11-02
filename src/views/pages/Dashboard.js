@@ -149,9 +149,7 @@ class Dashboard extends Component {
       })
   
       this.toggle()
-      this.showAlert('Success')
   
-      /* Post API request here */
       let { firstNameField, lastNameField, emailField, phoneField, birthdayField, sexField, addressField, imgField } = this.state
       if (!imgField) imgField = this.state.img 
       fetch('https://jsonplaceholder.typicode.com/users/1', {
@@ -171,7 +169,8 @@ class Dashboard extends Component {
         })
       })
       .then((res) => {
-        console.log(res)
+        if (res.status === 200) this.showAlert('Success')
+        else this.showAlert('Error')
       })
     } else {
       this.showAlert('ValidationError', validationErrors)
