@@ -138,7 +138,7 @@ const pageList = [
     name: 'Widgets',
     path: '/widgets',
     component: Widgets,
-  },
+  }
 ];
 
 export default pageList;
