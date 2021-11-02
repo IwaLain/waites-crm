@@ -1,0 +1,6 @@
+.profile-edit__alert {
+  position: absolute !important;
+  top: 10px;
+  left: 10px;
+  z-index: 9999;
+}

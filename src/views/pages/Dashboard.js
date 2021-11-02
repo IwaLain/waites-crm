@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
-import { Card, Button, Row, Col, Modal, ModalBody, ModalFooter, ModalHeader, Form, FormGroup, Label, Input } from 'reactstrap';
+import { Card, Button, Row, Col, Modal, ModalBody, ModalFooter, ModalHeader, Form, FormGroup, Label, Input, Alert } from 'reactstrap';
 import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css";
+import '../../assets/styles/customStyles.css'
 
 class Dashboard extends Component {
   constructor(props) {
@@ -16,37 +17,127 @@ class Dashboard extends Component {
       phone: '',
       sex: '',
       address: '',
-      img: ''
+      img: 'user1.png',
+      validationErrors: [],
+      validationIsBad: false,
+      alertMsg: '',
+      alertStatus: '',
+      alertVisible: false
     }
-    this.toggle = this.toggle.bind(this)
   }
 
-  toggle() {
+  toggle = () => {
     this.setState((prevState) => ({
       modal: !prevState.modal
     }))
   }
 
-  saveChanges = () => {
+  showAlert = (type, value) => {
+    this.setState({ alert: '' })
+
+    switch (type) {
+        case 'Success':
+          this.setState({ alertStatus: 'success' })
+          this.setState({ alertMsg: 'Успешно!' })
+          break
+        case 'Error':
+          this.setState({ alertStatus: 'danger' })
+          this.setState({ alertMsg: 'Ошибка!' })
+          break
+        case 'ValidationError':
+          this.setState({ alertStatus: 'danger' })
+          this.setState({ alertMsg: value })
+          break
+        default:
+          return 'Invalid type.'
+        }
+        this.setState({ alertVisible: true })
+        setTimeout(() => {
+            this.setState({ alertVisible: false })
+            const fields = document.querySelectorAll('.is-invalid')
+            fields.forEach((el) => {
+              el.classList.remove('is-invalid')
+            })
+        }, 1500)
+    }
+  
+    validation = (el) => {
+      const name = /^[a-zA-Z]+$/
+      const phone = /^[0-9\-+]{9,15}$/
+      const birthday = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])\/\d{4}$/
+      let validationError = ''
+
+        switch(el.id) {
+          case 'firstName':
+              if (!name.test(el.value)) {
+                  validationError = 'Name is not valid.'
+                  el.classList.add('is-invalid')
+              } else if (el.value.length <= 3) {
+                  validationError = 'Name must contain more than 3 symbols.'
+                  el.classList.add('is-invalid')
+              }
+              break
+          case 'lastName':
+              if (!name.test(el.value)) {
+                  validationError = 'Name is not valid.'
+                  el.classList.add('is-invalid')
+              } else if (el.value.length <= 3) {
+                  validationError = 'Name must contain more than 3 symbols.'
+                  el.classList.add('is-invalid')
+              }
+              break
+          case 'phone':
+              if (!phone.test(el.value)) {
+                  validationError = 'Phone is not valid.'
+                  el.classList.add('is-invalid')
+              }
+              break
+          case 'birthday':
+              if (!birthday.test(el.value)) {
+                  validationError = 'Date format: 29/03/2001'
+                  el.classList.add('is-invalid')
+              }
+              break
+        }
+
+      return validationError
+  }
+
+  saveChanges = (e) => {
+    e.preventDefault()
+
     let date = this.state.date
     let birthday = [
       (date.getDate() > 9 ? '' : '0') + date.getDate(), '/',
       (date.getMonth() + 1 > 9 ? '' : '0') + (date.getMonth() + 1), '/',
       date.getFullYear()
     ].join('')
+    let validationErrors = []
+    for(let el of e.target.elements) {
+      if (this.validation(el).length > 0) {
+        validationErrors += ' ' + this.validation(el)
+      }
+    }
 
-    this.setState({ user: {
-      firstName: this.state.firstName,
-      lastName: this.state.lastName,
-      email: this.state.email,
-      phone: this.state.phone,
-      sex: this.state.sex,
-      address: this.state.address,
-      birthday,
-      img: this.state.img
-    } })
-
-    /* Post API request here */
+    if (!validationErrors.length > 0) {
+      this.setState({ user: {
+        firstName: this.state.firstName,
+        lastName: this.state.lastName,
+        email: this.state.email,
+        phone: this.state.phone,
+        sex: this.state.sex,
+        address: this.state.address,
+        birthday,
+        img: this.state.img
+      }})
+  
+      this.toggle()
+      this.showAlert('Success')
+  
+      /* Post API request here */
+    } else {
+      this.showAlert('ValidationError', validationErrors)
+    }
   }
 
   componentDidMount() {
@@ -110,7 +201,7 @@ class Dashboard extends Component {
         <Modal isOpen={this.state.modal} toggle={this.toggle}>
             <ModalHeader toggle={this.toggle}>Edit profile</ModalHeader>
             <ModalBody>
-              <Form>
+              <Form id="form" onSubmit={this.saveChanges}>
                 <FormGroup>
                     <Label for="firstName">First Name</Label>
                     <Input type="text" id="firstName" value={this.state.firstName} onChange={(e) => this.setState({ firstName: e.target.value })} required/>
@@ -125,7 +216,12 @@ class Dashboard extends Component {
                 </FormGroup>
                 <FormGroup>
                     <Label for="phone">Phone</Label>
-                    <Input type="text" id="phone" value={this.state.phone} onChange={(e) => this.setState({ phone: e.target.value })} required/>
+                    <Input type="text" id="phone" value={this.state.phone} 
+                    onChange={(e) => {
+                      if (/^[0-9\-\+]{0,15}$/.test(e.target.value)) {
+                        this.setState({ phone: e.target.value })
+                      }
+                    }} required/>
                 </FormGroup>
                 <FormGroup>
                     <Label for="sex">Sex</Label>
@@ -153,10 +249,11 @@ class Dashboard extends Component {
               </Form>
             </ModalBody>
             <ModalFooter>
-                <Button color="primary" onClick={this.saveChanges}>Save</Button>{' '}
+                <Button color="primary" type="submit" form="form">Save</Button>{' '}
                 <Button color="secondary" onClick={this.toggle}>Cancel</Button>
             </ModalFooter>
         </Modal>
+        <Alert className="profile-edit__alert" color={this.state.alertStatus} isOpen={this.state.alertVisible}>{this.state.alertMsg}</Alert>
       </div>
     );
   }
