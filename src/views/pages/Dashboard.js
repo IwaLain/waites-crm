@@ -4,28 +4,21 @@ import DatePicker from 'react-datepicker'
 import "react-datepicker/dist/react-datepicker.css";
 import '../../assets/styles/customStyles.css'
 import avatarPlaceholder from '../../assets/images/user1.png'
+import { token } from '../../assets/token.json'
+
+const url = 'http://weather-csv'
+const userId = 3
 
 class Dashboard extends Component {
   constructor(props) {
     super(props)
     this.state = {
       modal: false,
-      firstName: '',
-      lastName: '',
+      username: '',
       email: '',
-      phone: '',
-      sex: '',
-      birthday: '',
-      address: '',
       img: avatarPlaceholder,
-      firstNameField: '',
-      lastNameField: '',
+      usernameField: '',
       emailField: '',
-      phoneField: '',
-      sexField: '',
-      addressField: '',
-      birthdayField: new Date(),
-      imgField: null,
       validationErrors: [],
       validationIsBad: false,
       alertMsg: '',
@@ -72,6 +65,17 @@ class Dashboard extends Component {
       let validationError = ''
 
         switch(el.id) {
+          case 'username':
+              if (!name.test(el.value)) {
+                  validationError = 'Name is not valid.'
+                  el.classList.add('is-invalid')
+              } else if (el.value.length <= 3) {
+                  validationError = 'Name must contain more than 3 symbols.'
+                  el.classList.add('is-invalid')
+              } else {
+                el.classList.remove('is-invalid')
+              }
+              break
           case 'firstName':
               if (!name.test(el.value)) {
                   validationError = 'Name is not valid.'
@@ -118,12 +122,12 @@ class Dashboard extends Component {
   saveChanges = (e) => {
     e.preventDefault()
 
-    let date = this.state.birthdayField
-    let birthdayFormatted = [
-      (date.getDate() > 9 ? '' : '0') + date.getDate(), '/',
-      (date.getMonth() + 1 > 9 ? '' : '0') + (date.getMonth() + 1), '/',
-      date.getFullYear()
-    ].join('')
+    // let date = this.state.birthdayField
+    // let birthdayFormatted = [
+    //   (date.getDate() > 9 ? '' : '0') + date.getDate(), '/',
+    //   (date.getMonth() + 1 > 9 ? '' : '0') + (date.getMonth() + 1), '/',
+    //   date.getFullYear()
+    // ].join('')
 
     let validationErrors = []
     for(let el of e.target.elements) {
@@ -135,22 +139,16 @@ class Dashboard extends Component {
     if (!validationErrors.length > 0) {  
       this.toggle()
   
-      let { firstNameField, lastNameField, emailField, phoneField, birthdayField, sexField, addressField, imgField } = this.state
-      if (!imgField) imgField = this.state.img 
-      fetch('https://jsonplaceholder.typicode.com/users/1', {
+      let { usernameField, emailField } = this.state
+      // if (!imgField) imgField = this.state.img 
+      fetch(`${url}/api/user/update/${userId}?access-token=${token}`, {
         method: 'PUT',
         headers: {
           'Content-type': 'application/json; charset=UTF-8',
         },
         body: JSON.stringify({
-          firstName: firstNameField,
-          lastName: lastNameField,
+          username: usernameField,
           email: emailField,
-          phone: phoneField,
-          birthday: birthdayField,
-          sex: sexField,
-          address: addressField,
-          img: imgField
         })
       })
       .then((res) => {
@@ -159,13 +157,8 @@ class Dashboard extends Component {
 
           if(this.state.imgField) this.setState({ img: this.state.imgField })
           this.setState({
-            firstName: this.state.firstNameField,
-            lastName: this.state.lastNameField,
+            username: this.state.usernameField,
             email: this.state.emailField,
-            phone: this.state.phoneField,
-            sex: this.state.sexField,
-            address: this.state.addressField,
-            birthday: birthdayFormatted,
           })
         }
         else this.showAlert('Error')
@@ -197,26 +190,17 @@ class Dashboard extends Component {
   }
 
   componentDidMount() {
-    fetch('db.json')
+    fetch(`${url}/api/user?access-token=${token}`)
     .then((res) => res.json())
     .then((data) => {
-      let user = data.users[0]
-      let formatted = user.birthday.split('/')
+      let user = data[0].filter((el) => el.id === userId)
+
+      // let formatted = user.birthday.split('/')
       this.setState({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        phone: user.phone,
-        sex: user.sex,
-        address: user.address,
-        birthday: user.birthday,
-        firstNameField: user.firstName,
-        lastNameField: user.lastName,
-        emailField: user.email,
-        phoneField: user.phone,
-        sexField: user.sex,
-        addressField: user.address,
-        birthdayField: new Date(`${formatted[1]}/${formatted[0]}/${formatted[2]}`) 
+        username: user[0].username,
+        email: user[0].email,
+        usernameField: user[0].username,
+        emailField: user[0].email,
       })
     })
   }
@@ -230,19 +214,19 @@ class Dashboard extends Component {
               <img src={this.state.img} style={{ width: 100, height: 100 }} className="b-circle" alt="profile" />
             </div>
             <div>
-              <h2 className="h4">{`${this.state.firstName} ${this.state.lastName}`}</h2>
+              <h2 className="h4">{this.state.username}</h2>
               <Button color="dark" onClick={this.toggle}>Edit profile</Button>
               <hr />
               <Row className="text-center m-b">
-                <Col>
+                {/* <Col>
                   <strong>{this.state.phone}</strong>
                   <div className="text-muted">Phone</div>
-                </Col>
+                </Col> */}
                 <Col>
                   <strong>{this.state.email}</strong>
                   <div className="text-muted">Email</div>
                 </Col>
-                <Col>
+                {/* <Col>
                   <strong>{this.state.birthday}</strong>
                   <div className="text-muted">Birthday</div>
                 </Col>
@@ -253,7 +237,7 @@ class Dashboard extends Component {
                 <Col>
                   <strong>{this.state.address}</strong>
                   <div className="text-muted">Address</div>
-                </Col>
+                </Col> */}
               </Row>
             </div>
           </div>
@@ -263,18 +247,22 @@ class Dashboard extends Component {
             <ModalBody>
               <Form id="form" onSubmit={this.saveChanges}>
                 <FormGroup>
+                    <Label for="username">Username</Label>
+                    <Input type="text" id="username" value={this.state.usernameField} onBlur={(e) => this.validation(e.target)} onChange={(e) => this.setState({ usernameField: e.target.value })} required/>
+                </FormGroup>
+                {/* <FormGroup>
                     <Label for="firstName">First Name</Label>
                     <Input type="text" id="firstName" value={this.state.firstNameField} onBlur={(e) => this.validation(e.target)} onChange={(e) => this.setState({ firstNameField: e.target.value })} required/>
                 </FormGroup>
                 <FormGroup>
                     <Label for="lastName">Last Name</Label>
                     <Input type="text" id="lastName" value={this.state.lastNameField} onBlur={(e) => this.validation(e.target)} onChange={(e) => this.setState({ lastNameField: e.target.value })} required/>
-                </FormGroup>
+                </FormGroup> */}
                 <FormGroup>
                     <Label for="email">Email</Label>
                     <Input type="text" id="email" value={this.state.emailField} onBlur={(e) => this.validation(e.target)} onChange={(e) => this.setState({ emailField: e.target.value })} disabled required/>
                 </FormGroup>
-                <FormGroup>
+                {/* <FormGroup>
                     <Label for="phone">Phone</Label>
                     <Input type="text" id="phone" value={this.state.phoneField} onBlur={(e) => this.validation(e.target)} 
                     onChange={(e) => {
@@ -305,7 +293,7 @@ class Dashboard extends Component {
                 <FormGroup>
                     <Label for="address">Address</Label>
                     <Input type="text" id="address" value={this.state.addressField} onBlur={(e) => this.validation(e.target)} onChange={(e) => this.setState({ addressField: e.target.value })} required/>
-                </FormGroup>
+                </FormGroup> */}
               </Form>
             </ModalBody>
             <ModalFooter>
