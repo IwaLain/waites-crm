@@ -62,10 +62,6 @@ class Dashboard extends Component {
         this.setState({ alertVisible: true })
         setTimeout(() => {
             this.setState({ alertVisible: false })
-            const fields = document.querySelectorAll('.is-invalid')
-            fields.forEach((el) => {
-              el.classList.remove('is-invalid')
-            })
         }, 1500)
     }
   
@@ -136,18 +132,7 @@ class Dashboard extends Component {
       }
     }
 
-    if (!validationErrors.length > 0) {
-      if(this.state.imgField) this.setState({ img: this.state.imgField })
-      this.setState({
-        firstName: this.state.firstNameField,
-        lastName: this.state.lastNameField,
-        email: this.state.emailField,
-        phone: this.state.phoneField,
-        sex: this.state.sexField,
-        address: this.state.addressField,
-        birthday: birthdayFormatted,
-      })
-  
+    if (!validationErrors.length > 0) {  
       this.toggle()
   
       let { firstNameField, lastNameField, emailField, phoneField, birthdayField, sexField, addressField, imgField } = this.state
@@ -169,7 +154,20 @@ class Dashboard extends Component {
         })
       })
       .then((res) => {
-        if (res.status === 200) this.showAlert('Success')
+        if (res.status === 200) {
+          this.showAlert('Success')
+
+          if(this.state.imgField) this.setState({ img: this.state.imgField })
+          this.setState({
+            firstName: this.state.firstNameField,
+            lastName: this.state.lastNameField,
+            email: this.state.emailField,
+            phone: this.state.phoneField,
+            sex: this.state.sexField,
+            address: this.state.addressField,
+            birthday: birthdayFormatted,
+          })
+        }
         else this.showAlert('Error')
       })
     } else {
@@ -297,7 +295,7 @@ class Dashboard extends Component {
                   <Label for="img">Img</Label>
                   <Input className="mb-2" type="file" id="img" 
                   onChange={(e) => this.uploadImage(e)}/>
-                  {this.state.imgField && (<img style={{ width: 100, height: 100 }} src={this.state.imgField} alt="qwe"/>)}
+                  {this.state.imgField && (<img className="b-circle" style={{ width: 100, height: 100 }} src={this.state.imgField} alt="qwe"/>)}
                   
                 </FormGroup>
                 <FormGroup>
